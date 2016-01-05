@@ -1,0 +1,17 @@
+{
+  "name": "molovo/interrogate",
+  "autoload": {
+    "psr-4": {
+      "Molovo\\Interrogate\\": "src/"
+    }
+  },
+  "require": {
+    "PHP": ">=5.5",
+    "vlucas/phpdotenv": "2.1.*",
+    "jdorn/sql-formatter": "1.2.*",
+    "doctrine/inflector": "^1.1"
+  },
+  "require-dev": {
+    "filp/whoops": "1.*"
+  }
+}
