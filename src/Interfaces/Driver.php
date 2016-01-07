@@ -21,9 +21,18 @@ interface Driver
      *
      * @param Query $query The query to execute
      *
-     * @return Set Query results
+     * @return bool Success/Failure
      */
     public function execute(Query $query);
+
+    /**
+     * Execute a query, and return it's results.
+     *
+     * @param Query $query The query to execute
+     *
+     * @return Collection Query results
+     */
+    public function fetch(Query $query);
 
     /**
      * Retreive total found rows for last query.
