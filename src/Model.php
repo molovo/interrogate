@@ -307,7 +307,7 @@ class Model
 
     /**
      * Update the model's updated_at column.
-     *
+     */
     public function updateTimestamp()
     {
         $this->updated_at = date('Y-m-d H:i:s');
@@ -315,7 +315,7 @@ class Model
 
     /**
      * Update both the model's timestamp columns.
-     *
+     */
     public function updateTimestamps()
     {
         $this->created_at = date('Y-m-d H:i:s');
@@ -324,7 +324,7 @@ class Model
 
     /**
      * Update the models updated_at column and save it.
-     *
+     */
     public function touch()
     {
         $this->updateTimestamp();
