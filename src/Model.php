@@ -7,6 +7,7 @@ use Molovo\Interrogate\Collection;
 use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Query;
 use Molovo\Interrogate\Table;
+use Molovo\Str\Str;
 use ReflectionClass;
 
 class Model
@@ -49,23 +50,23 @@ class Model
     /**
      * Create a new model.
      *
-     * @method __construct
-     *
      * @param Table         $table    The table the model belongs to
      * @param array         $data     The data to store against the model
      * @param Instance|null $instance The database instance the
      *                                model belongs to
      */
-    public function __construct(Table $table, array $data = [])
+    public function __construct(Table $table = null, array $data = [])
     {
+        if ($table === null) {
+            $table = new Table(static::$tableName);
+        }
+
         $this->table = $table;
         $this->data  = $data;
     }
 
     /**
      * Get the table for the current model.
-     *
-     * @method getTable
      *
      * @return Table|null
      */
@@ -74,10 +75,10 @@ class Model
         $class = implode('', array_slice(explode('\\', static::class), -1));
 
         if (static::$tableName === null) {
-            static::$tableName = Inflector::pluralize(Inflector::tableize($class));
+            static::$tableName = Str::pluralize(Str::snakeCase($class));
         }
 
-        $alias = Inflector::pluralize(Inflector::tableize($class));
+        $alias = Str::pluralize(Str::snakeCase($class));
 
         return Table::find(static::$tableName, $alias);
     }
@@ -88,8 +89,6 @@ class Model
      * name. If the method does not exist within the Query class, execute the
      * query, and try the same method on the resulting Collection. If neither
      * exist, just return null.
-     *
-     * @method __callStatic
      *
      * @param string $methodName The method being called
      * @param array  $args       Arguments to the method
@@ -137,8 +136,6 @@ class Model
     /**
      * Retrieve model properties from the data array.
      *
-     * @method __get
-     *
      * @param string $key The property to retrieve
      *
      * @return mixed The value
@@ -155,8 +152,6 @@ class Model
     /**
      * Set model properties within the changed data array,
      * so that they can be saved later.
-     *
-     * @method __set
      *
      * @param string $key   The property to set
      * @param mixed  $value The value to set
@@ -178,8 +173,6 @@ class Model
      * Revert a changed property to its original value. If no
      * key is passed, all properties are reverted.
      *
-     * @method revert
-     *
      * @param string $key The key to revert
      *
      * @return mixed The new value
@@ -198,8 +191,6 @@ class Model
     /**
      * Revert all changed properties to their original values.
      *
-     * @method revertAll
-     *
      * @return array The new values
      */
     public function revertAll()
@@ -210,16 +201,39 @@ class Model
     /**
      * Save the model's changed data to the database.
      *
-     * @method save
-     *
      * @return bool Success/Failure
      */
     public function save()
     {
+        if (!$this->stored) {
+            return $this->create();
+        }
+
         if (empty($this->originalData)) {
             return true;
         }
 
+        return $this->update();
+    }
+
+    /**
+     * Save the model's changed data at the end of the request.
+     */
+    public function saveLater()
+    {
+        $model = $this;
+        register_shutdown_function(function () use ($model) {
+            $model->save();
+        });
+    }
+
+    /**
+     * Update the model in the database.
+     *
+     * @return bool
+     */
+    public function update()
+    {
         $changed = array_keys($this->originalData);
         $primary = $this->table->primaryKey;
 
@@ -242,22 +256,43 @@ class Model
     }
 
     /**
-     * Save the model's changed data at the end of the request.
+     * Create the model in the database.
      *
-     * @method saveLater
+     * @return bool
      */
-    public function saveLater()
+    public function create()
     {
-        $model = $this;
-        register_shutdown_function(function () use ($model) {
-            $model->save();
-        });
+        $this->updateTimestamps();
+
+        $insert = Query::table($this->table)
+            ->insert($this->data);
+
+        if ($insert) {
+            $this->stored = true;
+        }
+
+        return $insert;
+    }
+
+    /**
+     * Delete the model.
+     *
+     * @return bool
+     */
+    public function delete()
+    {
+        if (!$this->stored) {
+            return;
+        }
+
+        $query = Query::table($this->table->name, $this->table->name)
+            ->where($this->table->primaryKey, $this->{$this->table->primaryKey});
+
+        return $query->delete();
     }
 
     /**
      * Create a duplicate of an model, ready to be saved to the database.
-     *
-     * @method clone
      *
      * @return self The cloned model
      */
@@ -271,20 +306,25 @@ class Model
     }
 
     /**
-     * Update the models updated_at column.
+     * Update the model's updated_at column.
      *
-     * @method updateTimestamp
-     */
     public function updateTimestamp()
     {
         $this->updated_at = date('Y-m-d H:i:s');
     }
 
     /**
+     * Update both the model's timestamp columns.
+     *
+    public function updateTimestamps()
+    {
+        $this->created_at = date('Y-m-d H:i:s');
+        $this->updated_at = date('Y-m-d H:i:s');
+    }
+
+    /**
      * Update the models updated_at column and save it.
      *
-     * @method touch
-     */
     public function touch()
     {
         $this->updateTimestamp();
@@ -293,8 +333,6 @@ class Model
 
     /**
      * Use the model's ID when converting to string.
-     *
-     * @method __toString
      *
      * @return string The model's ID
      */
@@ -305,8 +343,6 @@ class Model
 
     /**
      * Recursively format the contents of the model as an array.
-     *
-     * @method toArray
      *
      * @return array
      */
@@ -327,8 +363,6 @@ class Model
 
     /**
      * Recursively format the contents of the model as JSON.
-     *
-     * @method toJson
      *
      * @return string
      */

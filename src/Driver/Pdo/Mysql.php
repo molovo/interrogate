@@ -2,6 +2,7 @@
 
 namespace Molovo\Interrogate\Driver\Pdo;
 
+use Molovo\Interrogate\Database\Instance;
 use PDO;
 
 class Mysql extends Base
@@ -20,9 +21,11 @@ class Mysql extends Base
     /**
      * @inheritDoc
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], Instance $instance)
     {
-        $config       = array_merge($this->defaultConfig, $config);
+        $config = array_merge($this->defaultConfig, $config);
+
+        $this->instance = $instance;
 
         if (isset($config['socket'])) {
             $dsn = 'mysql:'.'unix_socket='.$config['socket'].';'

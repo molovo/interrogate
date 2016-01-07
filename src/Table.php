@@ -88,8 +88,9 @@ class Table
         $instance       = $instance ?: Instance::default_instance();
         $this->instance = $instance;
 
-        $this->primaryKey = $this->instance->primaryKeyForTable($this);
-        $this->fields     = $this->instance->fieldsForTable($this);
+        $this->primaryKey    = $this->instance->primaryKeyForTable($this);
+        $this->fields        = $this->instance->fieldsForTable($this);
+        $this->relationships = $this->instance->relationshipsForTable($this);
 
         $instance::$tableCache[$name.'.'.$alias] = $this;
     }

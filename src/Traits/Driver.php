@@ -7,6 +7,7 @@ use Molovo\Interrogate\Collection;
 use Molovo\Interrogate\Config;
 use Molovo\Interrogate\Model;
 use Molovo\Interrogate\Query;
+use Molovo\Str\Str;
 
 trait Driver
 {
@@ -55,20 +56,27 @@ trait Driver
                 }
             }
 
-            $config    = Config::get($this->table->instance->name);
-            $namespace = $config['model_namespace'];
+            $namespace = null;
+            $config    = Config::get($query->table->instance->name);
+
+            if (isset($config['model_namespace'])) {
+                $namespace = $config['model_namespace'];
+            }
 
             if ($namespace === null) {
                 $config = Config::get('default');
-                $config['model_namespace'];
+
+                if (isset($config['model_namespace'])) {
+                    $namespace = $config['model_namespace'];
+                }
 
                 if ($namespace === null) {
                     $namespace = 'Models';
                 }
             }
 
-            $class_name = Inflector::singularize($this->table->name);
-            $class_name = Inflector::classify($namespace.'\\'.$class_name);
+            $class_name = Str::singularize($query->table->name);
+            $class_name = Str::camelCaps($namespace.'\\'.$class_name);
 
             if (!class_exists($class_name)) {
                 $class_name = Model::class;
@@ -93,15 +101,33 @@ trait Driver
 
             // Get the join alias, so that we can use it to store
             // the collection against a property on the parent model.
-            $joinAlias      = $joinQuery->table->alias;
+            $joinAlias = $joinQuery->table->alias;
 
-            // Package the results for this join into models, and attach
-            // them to the nested collection.
-            $this->packageModel($data[$joinAlias], $joinCollection, $joinQuery);
+            // Get the data for this join
+            $joinData = $data[$joinAlias];
+
+            // Check that the data doesn't just contain null values - if it does
+            // then a row wasn't found so we don't create a model.
+            if ($this->checkDataNotEmpty($joinData)) {
+                // Package the results for this join into models, and attach
+                // them to the nested collection.
+                $this->packageModel($joinData, $joinCollection, $joinQuery);
+            }
 
             // Attach the nested collection to the parent model
             $this->tempModels[$hash]->{$joinAlias} = $joinCollection;
         }
+    }
+
+    protected function checkDataNotEmpty($data)
+    {
+        foreach ($data as $key => $value) {
+            if ($value !== null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -133,6 +159,7 @@ trait Driver
                     $pointer = &$pointer[$bit];
                 }
             }
+
             $pointer = $value;
         }
 

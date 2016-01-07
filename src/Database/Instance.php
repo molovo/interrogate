@@ -21,6 +21,13 @@ class Instance
     public static $tableCache = [];
 
     /**
+     * The database name for this instance.
+     *
+     * @var string
+     */
+    public $databaseName = null;
+
+    /**
      * An array of driver classes.
      *
      * @var array
@@ -48,45 +55,58 @@ class Instance
     /**
      * Create a new instance of the database and driver.
      *
-     * @method __construct
-     *
      * @param string|null $name The connection name
      */
     public function __construct($name = null)
     {
-        $name = $name ?: 'default';
+        // If a name isn't provided, then we'll use the default
+        $this->name = $name ?: 'default';
 
-        $config       = Config::get($name);
-        $driver       = $this->drivers[$config['driver']];
-        $this->driver = new $driver($config);
+        // Get the config for this instance
+        $config = Config::get($this->name);
 
+        // Store the database name
+        $this->databaseName = $config['database'];
+
+        // Initialise the driver
+        $driverClass  = $this->drivers[$config['driver']];
+        $this->driver = new $driverClass($config, $this);
+
+        // If the driver isn't created, throw an exception
         if (!($this->driver instanceof Driver)) {
             throw new InvalidDriverException($driver.' is not a valid driver.');
         }
 
-        static::$instances[$name] = $this;
+        // Cache the instance
+        static::$instances[$this->name] = $this;
+    }
+
+    /**
+     * Return the database instance.
+     *
+     * @return Instance
+     */
+    public static function instance($name)
+    {
+        if (isset(static::$instances[$name])) {
+            return static::$instances[$name];
+        }
+
+        return static::$instances[$name] = new self($name);
     }
 
     /**
      * Return the default database instance.
      *
-     * @method default_instance
-     *
      * @return Instance
      */
     public static function default_instance()
     {
-        if (isset(static::$instances['default'])) {
-            return static::$instances['default'];
-        }
-
-        return static::$instances['default'] = new self();
+        return static::instance('default');
     }
 
     /**
      * Compile and execute a query.
-     *
-     * @method execute
      *
      * @param Query $query The query to execute
      *
@@ -104,8 +124,6 @@ class Instance
     /**
      * Compile and execute a query, and return its results.
      *
-     * @method fetch
-     *
      * @param Query $query The query to execute
      *
      * @return Collection
@@ -122,8 +140,6 @@ class Instance
     /**
      * Get the primary key field for a given table.
      *
-     * @method primaryKeyForTable
-     *
      * @param Table $table The table
      *
      * @return string|null The primary key field name
@@ -136,8 +152,6 @@ class Instance
     /**
      * Get the fields for a given table.
      *
-     * @method fieldsForTable
-     *
      * @param Table $table The table
      *
      * @return string[] The field names for the table
@@ -145,5 +159,17 @@ class Instance
     public function fieldsForTable(Table $table)
     {
         return $this->driver->fieldsForTable($table);
+    }
+
+    /**
+     * Get the relationships for a given table.
+     *
+     * @param Table $table The table
+     *
+     * @return string[] The relationship names for the table
+     */
+    public function relationshipsForTable(Table $table)
+    {
+        return $this->driver->relationshipsForTable($table);
     }
 }

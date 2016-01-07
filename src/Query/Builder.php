@@ -4,6 +4,7 @@ namespace Molovo\Interrogate\Query;
 
 use Molovo\Interrogate\Exceptions\QueryExecutionException;
 use Molovo\Interrogate\Query;
+use SqlFormatter;
 
 class Builder
 {
@@ -120,6 +121,10 @@ class Builder
             $this->compileTableString();
         }
 
+        if ($type === Query::DELETE) {
+            $this->compileTableString();
+        }
+
         // For update queries, start with the table string, then compile
         // the fields to be updated.
         if ($type === Query::UPDATE) {
@@ -127,20 +132,29 @@ class Builder
             $this->compileUpdateFields();
         }
 
-        // Compile any joins attached to the query
-        $this->compileJoins();
+        // For insert queries, start with the table string, then compile
+        // the fields to be inserted.
+        if ($type === Query::INSERT) {
+            $this->compileTableString();
+            $this->compileInsertFields();
+        }
 
-        // Compile all the where clauses for the query (and any subqueries)
-        $this->compileWhereClauses($this->query);
+        if ($type !== Query::INSERT) {
+            // Compile any joins attached to the query
+            $this->compileJoins();
 
-        // Compile group, having and order clauses
-        $this->compileGroupFields();
-        $this->compileClauses($this->query->havingClauses);
-        $this->compileOrderFields();
+            // Compile all the where clauses for the query (and any subqueries)
+            $this->compileWhereClauses($this->query);
 
-        // Compile limit and offset
-        $this->compileLimit();
-        $this->compileOffset();
+            // Compile group, having and order clauses
+            $this->compileGroupFields();
+            $this->compileClauses($this->query->havingClauses);
+            $this->compileOrderFields();
+
+            // Compile limit and offset
+            $this->compileLimit();
+            $this->compileOffset();
+        }
     }
 
     /**
@@ -237,6 +251,34 @@ class Builder
         }
 
         $this->queryString .= implode(', ', $compiledFields);
+    }
+
+    /**
+     * Compile the fields for an insert query.
+     *
+     * @method compileInsertFields
+     */
+    private function compileInsertFields()
+    {
+        $fields         = $this->query->insertFields;
+        $compiledFields = [];
+        $compiledValues = [];
+
+        if (sizeof($fields) > 0) {
+            foreach ($fields as $key => $value) {
+                $compiledFields[] = '`'.$key.'`';
+                $compiledValues[] = '?';
+                $this->appendVar($value);
+            }
+        }
+
+        if (!empty($compiledFields)) {
+            $this->queryString .= ' ('.implode(',', $compiledFields).')';
+        }
+
+        if (!empty($compiledValues)) {
+            $this->queryString .= ' VALUES ('.implode(',', $compiledValues).')';
+        }
     }
 
     /**

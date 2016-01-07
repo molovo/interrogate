@@ -4,6 +4,7 @@ namespace Molovo\Interrogate\Driver;
 
 use Molovo\Interrogate\Collection;
 use Molovo\Interrogate\Config;
+use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Exceptions\QueryExecutionException;
 use Molovo\Interrogate\Interfaces\Driver as DriverInterface;
 use Molovo\Interrogate\Model;
@@ -34,7 +35,7 @@ class Mysqli implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], Instance $instance)
     {
         $config       = array_merge($this->defaultConfig, $config);
         $this->client = new Client(
@@ -64,7 +65,11 @@ class Mysqli implements DriverInterface
 
         $stmt = $this->prepareQuery($query);
 
-        return $stmt->execute();
+        if ($success = $stmt->execute()) {
+            return $success;
+        }
+
+        return $this->error();
     }
 
     /**
@@ -98,6 +103,18 @@ class Mysqli implements DriverInterface
             return $this->packageResults($result, $query);
         }
 
+        return $this->error();
+    }
+
+    /**
+     * Throw an exception, as query execution failed.
+     *
+     * @method error
+     *
+     * @throws QueryExecutionException
+     */
+    private function error()
+    {
         // Throw an exception, as the query failed
         throw new QueryExecutionException('Mysqli error '.$this->client->errno.': '.$this->client->error);
     }

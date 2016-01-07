@@ -4,6 +4,7 @@ namespace Molovo\Interrogate;
 
 use Doctrine\Common\Inflector\Inflector;
 use Molovo\Interrogate\Database\Instance;
+use Molovo\Interrogate\Exceptions\QuerySyntaxError;
 use Molovo\Interrogate\Query;
 use Molovo\Interrogate\Query\Builder;
 use Molovo\Interrogate\Table;
@@ -150,8 +151,6 @@ class Query
     /**
      * Create a new query.
      *
-     * @method __construct
-     *
      * @param Table|string  $table    The table to query
      * @param string|null   $alias    An alias to use
      * @param Instance|null $instance The instance to use
@@ -173,8 +172,6 @@ class Query
      * including the camelCased column name in the method name.
      *
      * e.g. `$query->whereColumnName(3)` is equivalent to `$query->where('column_name', 3)`
-     *
-     * @method __call
      *
      * @param string $methodName The method being called
      * @param array  $args       The arguments provided to the method
@@ -214,8 +211,6 @@ class Query
     /**
      * Statically create a new Query.
      *
-     * @method table
-     *
      * @param Table|string  $table    The table name to query
      * @param string|null   $alias    An alias for the Query
      * @param Instance|null $instance The instance to use
@@ -231,8 +226,6 @@ class Query
      * Set the fields to be selected.
      *
      * Accepts strings or Query objects as parameters.
-     *
-     * @method select
      *
      * @return $this
      */
@@ -269,8 +262,6 @@ class Query
 
     /**
      * Add a where clause to the query.
-     *
-     * @method where
      *
      * @param string      $column    The column to compare.
      * @param string|null $operator  The operator to use for the clause.
@@ -310,8 +301,6 @@ class Query
     /**
      * Add a where clause to the query, using OR as a delimiter.
      *
-     * @method where
-     *
      * @param string      $column   The column to compare.
      * @param string|null $operator The operator to use for the clause.
      *                              A default of '=' is assumed, and if that
@@ -336,8 +325,6 @@ class Query
     /**
      * Create two where clauses, testing if the provided column falls between
      * two provided values.
-     *
-     * @method whereBetween
      *
      * @param string $column      The column to compare
      * @param mixed  $firstValue  The first values
@@ -364,8 +351,6 @@ class Query
 
     /**
      * Add an on clause to the query.
-     *
-     * @method on
      *
      * @param string      $column    The column to compare.
      * @param string|null $operator  The operator to use for the clause.
@@ -405,8 +390,6 @@ class Query
     /**
      * Add an on clause to the query, using OR as a delimiter.
      *
-     * @method on
-     *
      * @param string      $column   The column to compare.
      * @param string|null $operator The operator to use for the clause.
      *                              A default of '=' is assumed, and if that
@@ -423,8 +406,6 @@ class Query
 
     /**
      * Add an having clause to the query.
-     *
-     * @method having
      *
      * @param string      $column    The column to compare.
      * @param string|null $operator  The operator to use for the clause.
@@ -464,8 +445,6 @@ class Query
     /**
      * Add an having clause to the query, using OR as a delimiter.
      *
-     * @method having
-     *
      * @param string      $column   The column to compare.
      * @param string|null $operator The operator to use for the clause.
      *                              A default of '=' is assumed, and if that
@@ -483,21 +462,32 @@ class Query
     /**
      * Add a join to the query.
      *
-     * @method join
-     *
-     * @param self   $subquery The subquery containing the clauses for the join.
-     * @param string $type     The join type.
+     * @param self|string $join The subquery containing the clauses for the join.
+     * @param string      $type The join type.
      *
      * @return $this
      */
-    public function join(self $subquery, $type = self::LEFT_JOIN)
+    public function join($join, $type = self::LEFT_JOIN)
     {
-        $alias = $subquery->table->alias;
+        if (is_string($join)) {
+            if (!isset($this->table->relationships[$join])) {
+                throw new QuerySyntaxError('The relationship specified does not exist');
+            }
 
-        $subquery->type   = $type;
-        $subquery->parent = $this;
+            $relationship = $this->table->relationships[$join];
 
-        $this->joins[$alias] = $subquery;
+            return $this->join(
+                self::table(Table::find($relationship->table, $join))
+                    ->on($relationship->references, 'parent.'.$relationship->column)
+            );
+        }
+
+        $alias = $join->table->alias;
+
+        $join->type   = $type;
+        $join->parent = $this;
+
+        $this->joins[$alias] = $join;
 
         return $this;
     }
@@ -505,49 +495,41 @@ class Query
     /**
      * Add a left join to the query.
      *
-     * @method leftJoin
-     *
-     * @param self $subquery The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing the clauses for the join.
      *
      * @return $this
      */
-    public function leftJoin(self $subquery)
+    public function leftJoin($join)
     {
-        return $this->join($subquery, self::LEFT_JOIN);
+        return $this->join($join, self::LEFT_JOIN);
     }
 
     /**
      * Add a right join to the query.
      *
-     * @method rightJoin
-     *
-     * @param self $subquery The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing the clauses for the join.
      *
      * @return $this
      */
-    public function rightJoin(self $subquery)
+    public function rightJoin($join)
     {
-        return $this->join($subquery, self::RIGHT_JOIN);
+        return $this->join($join, self::RIGHT_JOIN);
     }
 
     /**
      * Add an inner join to the query.
      *
-     * @method innerJoin
-     *
-     * @param self $subquery The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing the clauses for the join.
      *
      * @return $this
      */
-    public function innerJoin(self $subquery)
+    public function innerJoin($join)
     {
-        return $this->join($subquery, self::INNER_JOIN);
+        return $this->join($join, self::INNER_JOIN);
     }
 
     /**
      * Set the fields used for ordering the query.
-     *
-     * @method orderBy
      *
      * @return $this
      */
@@ -561,8 +543,6 @@ class Query
     /**
      * Set the fields used for grouping the query.
      *
-     * @method groupBy
-     *
      * @return $this
      */
     public function groupBy($field)
@@ -574,8 +554,6 @@ class Query
 
     /**
      * Paginate a query.
-     *
-     * @method paginate
      *
      * @param int $limit The limit for each page
      * @param int $page  The current page number
@@ -605,8 +583,6 @@ class Query
     /**
      * Get the current page from the URL query string.
      *
-     * @method getPage
-     *
      * @return int
      */
     private function getPage()
@@ -623,8 +599,6 @@ class Query
     /**
      * Set the limit for the query.
      *
-     * @method limit
-     *
      * @param int $limit The limit
      *
      * @return $this
@@ -638,8 +612,6 @@ class Query
 
     /**
      * Set the offset for the query.
-     *
-     * @method offset
      *
      * @param int $offset The offset
      *
@@ -656,8 +628,6 @@ class Query
      * Changes query type to update, and defines the fields to be updated,
      * then executes the query.
      *
-     * @method update
-     *
      * @param array $fields The fields to be updated
      *
      * @return bool
@@ -671,9 +641,23 @@ class Query
     }
 
     /**
-     * Changes query type to delete, then executes the query.
+     * Changes query type to insert, and defines the fields to be inserted,
+     * then executes the query.
      *
-     * @method delete
+     * @param array $fields The fields to be inserted
+     *
+     * @return bool
+     */
+    public function insert(array $fields = [])
+    {
+        $this->type         = self::INSERT;
+        $this->insertFields = $fields;
+
+        return $this->execute();
+    }
+
+    /**
+     * Changes query type to delete, then executes the query.
      *
      * @param array $fields The fields to be deleted
      *
@@ -683,13 +667,16 @@ class Query
     {
         $this->type         = self::DELETE;
 
+        // We can't use aliases for columns in a delete query,
+        // so we reset the table name here to avoid errors,
+        // and re-store it in the cache.
+        $this->table = Table::find($this->table->name, $this->table->name, $this->instance);
+
         return $this->execute();
     }
 
     /**
      * Execute the query against its instance.
-     *
-     * @method execute
      *
      * @return bool
      */
@@ -703,8 +690,6 @@ class Query
     /**
      * Fetch the results for the query.
      *
-     * @method execute
-     *
      * @return Set|null Results or nothing
      */
     public function fetch()
@@ -717,8 +702,6 @@ class Query
     /**
      * Get the first row returned by a Query.
      *
-     * @method first
-     *
      * @return Model
      */
     public function first()
@@ -730,9 +713,7 @@ class Query
     }
 
     /**
-     * Find a row by its primary key value.
-     *
-     * @method find
+     * Find a row (or rows) by its primary key value.
      *
      * @param int|mixed $id The primary key value
      *
@@ -740,13 +721,17 @@ class Query
      */
     public function find($id)
     {
+        // If an array is passed, query against all IDs and return a collection.
+        if (is_array($id)) {
+            return $this->whereIn($this->table->primaryKey, $id)->fetch();
+        }
+
+        // Otherwise, do a primary key lookup and return the object directly.
         return $this->where($this->table->primaryKey, $id)->first();
     }
 
     /**
      * Compile the Query object into an executable SQL string.
-     *
-     * @method compile
      */
     public function compile()
     {
@@ -755,8 +740,6 @@ class Query
 
     /**
      * Output the compiled, formatted SQL query to the screen.
-     *
-     * @method dump
      *
      * @return $this
      */

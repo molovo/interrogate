@@ -2,7 +2,7 @@
 
 Interrogate is a lightweight, standalone Object Relational Mapping (ORM) for PHP 5.5+.
 
-#### Installing
+## Installing
 
 ```sh
 composer require molovo/interrogate
@@ -10,8 +10,7 @@ composer require molovo/interrogate
 
 Copy the included `.env.example` file from `vendor/molovo/interrogate` to your web server's `DOCUMENT_ROOT`, and rename it to `.env`. Then, update the new `.env` file with your database connection information.
 
-#### Getting Started
-
+## Getting Started
 Queries are built using chained methods, which try to follow SQL grammar as much as possible. Queries return a `Collection` object containing multiple `Model` objects.
 
 ```php
@@ -31,8 +30,7 @@ foreach ($users as $user) {
 }
 ```
 
-#### Using Joins
-
+## Using Joins
 Queries with joins can be built by passing another `Query` object to the `join()` method. The models returned by the joined query are stored in a property on the model, using the table name (or alias if defined). The joined query can compare fields on the parent query with dot syntax, using either the table name (or alias) directly, or the keyword `parent` as below.
 
 ```php
@@ -56,8 +54,7 @@ foreach ($users as $user) {
 }
 ```
 
-#### Using Models
-
+## Using Models
 Model classes can created for tables to allow for quick query creation, and adding functionality on a per-table basis. The simplest form of a model is shown below:
 
 ```php
