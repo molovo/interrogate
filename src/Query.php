@@ -462,7 +462,7 @@ class Query
     /**
      * Add a join to the query.
      *
-     * @param self|string $join The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing clauses for the join.
      * @param string      $type The join type.
      *
      * @return $this
@@ -495,7 +495,7 @@ class Query
     /**
      * Add a left join to the query.
      *
-     * @param self|string $join The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing clauses for the join.
      *
      * @return $this
      */
@@ -507,7 +507,7 @@ class Query
     /**
      * Add a right join to the query.
      *
-     * @param self|string $join The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing clauses for the join.
      *
      * @return $this
      */
@@ -519,7 +519,7 @@ class Query
     /**
      * Add an inner join to the query.
      *
-     * @param self|string $join The subquery containing the clauses for the join.
+     * @param self|string $join The subquery containing clauses for the join.
      *
      * @return $this
      */

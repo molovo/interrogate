@@ -97,40 +97,34 @@ class Model
      */
     public static function __callStatic($methodName, array $args)
     {
-        // First, create a query against the model's table
-        $table = static::getTable();
-        $query = Query::table($table);
-
-        // Create a reference class against Query
-        $queryRef    = new \ReflectionClass(Query::class);
-
-        // Check if the method exists on the Query class
-        if ($queryRef->hasMethod($methodName)) {
-            // Invoke the method with the provided arguments
-            $method = $queryRef->getMethod($methodName);
-
-            // Return the results
-            return $method->invokeArgs($query, $args);
+        if ($query = static::getQueryRef($methodName, $args)) {
+            return $query;
         }
 
-        // If we get here, the method does not exist within the Query class,
-        // so we fetch the results of the query, and try the same method on the
-        // collection class
-        $collection    = $query->fetch();
-
-        // Create a reference class against Collection
-        $collectionRef = new \ReflectionClass(Collection::class);
-
-        // Check if the method exists on the Collection class
-        if ($collectionRef->hasMethod($methodName)) {
-            // Invoke the method with the provided arguments
-            $method = $collectionRef->getMethod($methodName);
-
-            // Return the results
-            return $method->invokeArgs($collection, $args);
+        if ($collection = static::getCollectionRef($query, $methodName, $args)) {
+            return $collection;
         }
 
         return;
+    }
+
+    /**
+     * Allows for creating queries against a model's relationships by calling
+     * the relationship name as a method.
+     *
+     * @param string $methodName The method being called
+     * @param array  $args       Arguments to the method
+     *
+     * @return mixed
+     */
+    public function __call($methodName, array $args)
+    {
+        if (isset($this->table->relationships[$methodName])) {
+            $relationship = $this->table->relationships[$methodName];
+
+            return Query::table($relationship->table)
+                ->where($relationship->references, $this->{$relationship->column});
+        }
     }
 
     /**
@@ -142,6 +136,9 @@ class Model
      */
     public function __get($key)
     {
+        if (isset($this->table->relationships[$key])) {
+            return $this->{$key}()->fetch();
+        }
         if (isset($this->data[$key])) {
             return $this->data[$key];
         }
@@ -167,6 +164,67 @@ class Model
         }
 
         return $this->data[$key] = $value;
+    }
+
+    /**
+     * Get a query ref for a statically called method.
+     *
+     * @param string $methodName The method being called
+     * @param array  $args       Arguments to the method
+     *
+     * @return mixed
+     */
+    private static function getQueryRef($methodName, $args)
+    {
+        // First, create a query against the model's table
+        $table = static::getTable();
+
+        $query = Query::table($table);
+
+        // Create a reference class against Query
+        $queryRef    = new \ReflectionClass(Query::class);
+
+        // Check if the method exists on the Query class
+        if ($queryRef->hasMethod($methodName)) {
+            // Invoke the method with the provided arguments
+            $method = $queryRef->getMethod($methodName);
+
+            // Return the results
+            return $method->invokeArgs($query, $args);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get a collection ref for a statically called method.
+     *
+     * @param Query  $query      The base query to return a collection
+     * @param string $methodName The method being called
+     * @param array  $args       Arguments to the method
+     *
+     * @return mixed
+     */
+    private static function getCollectionRef(Query $query, $methodName, array $args)
+    {
+        // If we get here, the method does not exist within the Query class,
+        // so we fetch the results of the query, and try the same method on the
+        // collection class
+        $collection    = $query->fetch();
+
+        // Create a reference class against Collection
+        $collectionRef = new \ReflectionClass(Collection::class);
+
+        // Check if the method exists on the Collection class
+        if ($collectionRef->hasMethod($methodName)) {
+            // Invoke the method with the provided arguments
+            $method = $collectionRef->getMethod($methodName);
+
+            // Return the results
+            return $method->invokeArgs($collection, $args);
+        }
+
+        return $collection;
     }
 
     /**
