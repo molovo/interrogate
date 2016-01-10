@@ -9,7 +9,8 @@
     "PHP": ">=5.5",
     "vlucas/phpdotenv": "2.1.*",
     "jdorn/sql-formatter": "1.2.*",
-    "molovo/str": "*"
+    "molovo/str": "^0.1",
+    "molovo/object": "^0.1"
   },
   "require-dev": {
     "filp/whoops": "1.*"
