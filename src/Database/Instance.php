@@ -66,10 +66,10 @@ class Instance
         $config = Config::get($this->name);
 
         // Store the database name
-        $this->databaseName = $config['database'];
+        $this->databaseName = $config->database;
 
         // Initialise the driver
-        $driverClass  = $this->drivers[$config['driver']];
+        $driverClass  = $this->drivers[$config->driver];
         $this->driver = new $driverClass($config, $this);
 
         // If the driver isn't created, throw an exception

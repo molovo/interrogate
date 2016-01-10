@@ -3,6 +3,7 @@
 namespace Molovo\Interrogate\Driver\Pdo;
 
 use Molovo\Interrogate\Collection;
+use Molovo\Interrogate\Config;
 use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Exceptions\QueryExecutionException;
 use Molovo\Interrogate\Interfaces\Driver as DriverInterface;
@@ -20,7 +21,7 @@ class Base implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function __construct(array $config = [], Instance $instance)
+    public function __construct(Config $config, Instance $instance)
     {
     }
 

@@ -2,32 +2,53 @@
 
 namespace Molovo\Interrogate;
 
+use Dotenv\Dotenv;
 use Molovo\Interrogate\Config;
-use Molovo\Interrogate\Database\Instance;
-use Molovo\Interrogate\Exceptions\InvalidDriverException;
-use Molovo\Interrogate\Interfaces\Driver;
-use Molovo\Interrogate\Table;
 
 class Database
 {
     /**
-     * Query the database.
+     * The config.
      *
-     * @method query
-     *
-     * @param string        $table    The table to query
-     * @param Instance|null $instance The database instance to use
-     *
-     * @return Query The query
+     * @var Config|null
      */
-    public static function query($table, Instance $instance = null)
-    {
-        $instance = $instance ?: Instance::default_instance();
+    private static $config = null;
 
-        if (!($table instanceof Table)) {
-            $table = Table::find($table);
+    /**
+     * Bootstrap the interrogate library.
+     *
+     * @param array $config The config to initialize with
+     */
+    public static function bootstrap(array $config = [])
+    {
+        if (empty($config)) {
+            $dotenv = new Dotenv($_SERVER['DOCUMENT_ROOT']);
+            $dotenv->load();
+
+            foreach ($_ENV as $key => $value) {
+                if (strpos($key, 'INTERROGATE') === 0) {
+                    $bits = explode('_', $key);
+
+                    list($namespace, $connection, $param) = $bits;
+
+                    $connection = strtolower($connection);
+                    $param      = strtolower($param);
+
+                    $config[$connection][$param] = $value;
+                }
+            }
         }
 
-        return new Query($table, $instance);
+        static::$config = new Config($config);
+    }
+
+    /**
+     * Get the database config.
+     *
+     * @return Config
+     */
+    public static function config()
+    {
+        return static::$config;
     }
 }

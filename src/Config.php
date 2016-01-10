@@ -2,81 +2,96 @@
 
 namespace Molovo\Interrogate;
 
-use Dotenv\Dotenv;
+use Molovo\Interrogate\Database;
 
 class Config
 {
     /**
-     * Private store of configuration values.
+     * The stored config values.
      *
-     * @var array
+     * @var stdClass
      */
-    private static $_vars = [];
+    private $values = null;
 
     /**
-     * Retrieve and cache config variables.
+     * Create a new Config object.
      *
-     * @method vars
-     *
-     * @return array The retreived config
+     * @param array $values The config values
      */
-    private static function &vars()
+    public function __construct(array $values = [])
     {
-        if (static::$_vars === null) {
-            return static::$_vars;
-        }
-
-        $dotenv = new Dotenv($_SERVER['DOCUMENT_ROOT']);
-        $dotenv->load();
-
-        foreach ($_ENV as $key => $value) {
-            if (strpos($key, 'INTERROGATE') === 0) {
-                $bits = explode('_', $key);
-
-                list($namespace, $connection, $param) = $bits;
-
-                $connection = strtolower($connection);
-                $param      = strtolower($param);
-
-                static::$_vars[$connection][$param] = $value;
+        foreach ($values as &$value) {
+            if (is_array($value)) {
+                $value = new self($value);
             }
         }
 
-        return static::$_vars;
+        $this->values = (object) $values;
     }
 
     /**
-     * Retreive the value for a given key.
+     * Get a config value.
      *
-     * @method get
+     * @param string $key The key of the value to get
      *
-     * @param string $key The key to fetch
-     *
-     * @return mixed|null The retreived value
+     * @return mixed The value
      */
-    public static function get($key)
+    public function __get($key)
     {
-        $vars = static::vars();
+        if (isset($this->values->{$key})) {
+            return $this->values->{$key};
+        }
 
-        if (isset($vars[$key])) {
-            return $vars[$key];
+        if ($value = $this->valueForPath($key)) {
+            return $value;
         }
 
         return;
     }
 
     /**
-     * Set the value for a given key.
+     * Return the config as an array.
      *
-     * @method set
-     *
-     * @param string $key   The key to set
-     * @param mixed  $value The value to set
+     * @return array
      */
-    public static function set($key, $value)
+    public function toArray()
     {
-        $vars = &static::vars();
+        return (array) $this->values;
+    }
 
-        return $vars[$key] = $value;
+    /**
+     * Get a value for a nested path.
+     *
+     * @param string $path The path to fetch
+     *
+     * @return mixed The value
+     */
+    public function valueForPath($path)
+    {
+        $bits = explode('.', $path);
+
+        $value = $this->values;
+        foreach ($bits as $bit) {
+            if (is_object($value)) {
+                $value = $value->{$bit};
+                continue;
+            }
+
+            return;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Get a config value.
+     *
+     * @param string $path The path of the value to get
+     *
+     * @return mixed The value
+     */
+    public static function get($key)
+    {
+        return Database::config()->valueForPath($key);
     }
 }

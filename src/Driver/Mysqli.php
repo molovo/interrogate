@@ -35,16 +35,16 @@ class Mysqli implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function __construct(array $config = [], Instance $instance)
+    public function __construct(Config $config, Instance $instance)
     {
-        $config       = array_merge($this->defaultConfig, $config);
+        $config       = new Config(array_merge($this->defaultConfig, $config->toArray()));
         $this->client = new Client(
-            $config['hostname'],
-            $config['username'],
-            $config['password'],
-            $config['database'],
-            $config['port'],
-            $config['socket']
+            $config->hostname,
+            $config->username,
+            $config->password,
+            $config->database,
+            $config->port,
+            $config->socket
         );
     }
 

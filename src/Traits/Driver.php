@@ -59,15 +59,15 @@ trait Driver
             $namespace = null;
             $config    = Config::get($query->table->instance->name);
 
-            if (isset($config['model_namespace'])) {
-                $namespace = $config['model_namespace'];
+            if (isset($config->model_namespace)) {
+                $namespace = $config->model_namespace;
             }
 
             if ($namespace === null) {
                 $config = Config::get('default');
 
-                if (isset($config['model_namespace'])) {
-                    $namespace = $config['model_namespace'];
+                if (isset($config->model_namespace)) {
+                    $namespace = $config->model_namespace;
                 }
 
                 if ($namespace === null) {

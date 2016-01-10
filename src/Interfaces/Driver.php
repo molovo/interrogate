@@ -2,6 +2,7 @@
 
 namespace Molovo\Interrogate\Interfaces;
 
+use Molovo\Interrogate\Config;
 use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Query;
 use Molovo\Interrogate\Table;
@@ -11,10 +12,10 @@ interface Driver
     /**
      * Create a new driver instance.
      *
-     * @param array    $config   Connection information
+     * @param Config   $config   Connection information
      * @param Instance $instance The database instance using this driver
      */
-    public function __construct(array $config = array(), Instance $instance);
+    public function __construct(Config $config, Instance $instance);
 
     /**
      * Execute a query.
