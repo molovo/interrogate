@@ -2,12 +2,12 @@
 
 namespace Molovo\Interrogate;
 
-use Doctrine\Common\Inflector\Inflector;
 use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Exceptions\QuerySyntaxError;
 use Molovo\Interrogate\Query;
 use Molovo\Interrogate\Query\Builder;
 use Molovo\Interrogate\Table;
+use Molovo\Str\Str;
 use ReflectionClass;
 
 class Query
@@ -181,7 +181,7 @@ class Query
     public function __call($methodName, $args)
     {
         // Convert the method name to snake_case
-        $methodName = Inflector::tableize($methodName);
+        $methodName = Str::snakeCase($methodName);
 
         // Explode the method name, and separate the first word
         $words     = explode('_', $methodName);
