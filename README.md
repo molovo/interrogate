@@ -14,7 +14,10 @@ Copy the included `.env.example` file from `vendor/molovo/interrogate` to your w
 Queries are built using chained methods, which try to follow SQL grammar as much as possible. Queries return a `Collection` object containing multiple `Model` objects.
 
 ```php
+use Molovo\Interrogate\Database;
 use Molovo\Interrogate\Query;
+
+Database::bootstrap();
 
 $query = Query::table('users')
     ->select('username', 'email')
