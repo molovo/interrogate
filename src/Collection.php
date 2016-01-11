@@ -4,75 +4,79 @@ namespace Molovo\Interrogate;
 
 class Collection implements \IteratorAggregate
 {
-    private $_objects = [];
+    /**
+     * The array of models in the Collection.
+     *
+     * @var Model[]
+     */
+    private $models = [];
 
     /**
      * Create a new Collection.
      *
      * @method __construct
      *
-     * @param Model[] $objects An array of objects
+     * @param Model[] $models An array of models
      */
-    public function __construct(array $objects = [])
+    public function __construct(array $models = [])
     {
-        foreach ($objects as $object) {
-            $key                  = $object->{$object->table->primaryKey};
-            $this->_objects[$key] = $object;
+        foreach ($models as $model) {
+            $key                  = $model->{$model->table->primaryKey};
+            $this->models[$key]   = $model;
         }
     }
 
     /**
-     * Use the object IDs when converting to string.
+     * Use the model IDs when converting to string.
      *
      * @method __toString
      *
-     * @return string The object IDs
+     * @return string The model IDs
      */
     public function __toString()
     {
-        return implode(', ', array_keys($this->_objects));
+        return implode(', ', array_keys($this->models));
 
         return $this->{$this->table->primaryKey};
     }
 
     /**
-     * Attach a new object to the collection.
+     * Attach a new model to the collection.
      *
      * @method attach
      *
-     * @param Model $object The object to attach
+     * @param Model $model The model to attach
      *
      * @return $this
      */
-    public function attach(Model $object)
+    public function attach(Model $model)
     {
-        $key                  = $object->{$object->table->primaryKey};
-        $this->_objects[$key] = $object;
+        $key                  = $model->{$model->table->primaryKey};
+        $this->models[$key]   = $model;
 
         return $this;
     }
 
     /**
-     * Detach an existing object from the collection.
+     * Detach an existing model from the collection.
      *
      * @method detach
      *
-     * @param Model $object The object to detach
+     * @param mixed $id The ID of the model to detach
      *
      * @return $this
      */
-    public function detach(Model $object)
+    public function detach($id)
     {
-        $key = $object->{$object->table->primaryKey};
-        if (isset($this->_objects[$key])) {
-            unset($this->_objects[$key]);
+        if (isset($this->models[$id])) {
+            unset($this->models[$id]);
         }
 
         return $this;
     }
 
     /**
-     * Retrieve the first object in the collection.
+     * Retrieve the first model in the collection.
      *
      * @method first
      *
@@ -80,13 +84,13 @@ class Collection implements \IteratorAggregate
      */
     public function first()
     {
-        $objects = $this->_objects;
+        $models = $this->models;
 
-        return array_shift($objects);
+        return array_shift($models);
     }
 
     /**
-     * Retrieve the last object in the collection.
+     * Retrieve the last model in the collection.
      *
      * @method last
      *
@@ -94,39 +98,39 @@ class Collection implements \IteratorAggregate
      */
     public function last()
     {
-        $objects = $this->_objects;
+        $models = $this->models;
 
-        return array_pop($objects);
+        return array_pop($models);
     }
 
     /**
-     * Retrieve a single object from the set by its ID.
+     * Retrieve a single model from the set by its ID.
      *
      * @method find
      *
-     * @param int $id The object's primary key
+     * @param int $id The model's primary key
      *
      * @return Model
      */
     public function find($id)
     {
-        if (isset($this->_objects[$id])) {
-            return $this->_objects[$id];
+        if (isset($this->models[$id])) {
+            return $this->models[$id];
         }
 
         return;
     }
 
     /**
-     * Create the ArrayIterator that allows us to call foreach on the object.
+     * Create the ArrayIterator that allows us to call foreach on the model.
      *
      * @method getIterator
      *
-     * @return \ArrayIterator The iterator object
+     * @return \ArrayIterator The iterator model
      */
     public function getIterator()
     {
-        return new \ArrayIterator($this->_objects);
+        return new \ArrayIterator($this->models);
     }
 
     /**
@@ -140,8 +144,8 @@ class Collection implements \IteratorAggregate
     {
         $output = [];
 
-        foreach ($this->_objects as $object) {
-            $output[] = $object->toArray();
+        foreach ($this->models as $model) {
+            $output[] = $model->toArray();
         }
 
         return $output;
@@ -174,11 +178,11 @@ class Collection implements \IteratorAggregate
     {
         $output = [];
 
-        foreach ($this->_objects as $object) {
+        foreach ($this->models as $model) {
             if ($key === null) {
-                $key = $object->table->primaryKey;
+                $key = $model->table->primaryKey;
             }
-            $output[$object->{$key}] = $object->{$value};
+            $output[$model->{$key}] = $model->{$value};
         }
 
         return $output;
