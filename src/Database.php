@@ -4,9 +4,17 @@ namespace Molovo\Interrogate;
 
 use Dotenv\Dotenv;
 use Molovo\Interrogate\Config;
+use Molovo\Interrogate\Database\Instance;
 
 class Database
 {
+    /**
+     * All active instances.
+     *
+     * @var Instance[]
+     */
+    private static $instances = [];
+
     /**
      * The config.
      *
@@ -50,5 +58,21 @@ class Database
     public static function config()
     {
         return static::$config;
+    }
+
+    /**
+     * Return a database instance.
+     *
+     * @return Instance
+     */
+    public static function instance($name = null)
+    {
+        $name = $name ?: 'default';
+
+        if (isset(static::$instances[$name])) {
+            return static::$instances[$name];
+        }
+
+        return static::$instances[$name] = new Instance($name, static::$config->{$name});
     }
 }

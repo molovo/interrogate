@@ -58,7 +58,7 @@ class Table
             $alias = $name;
         }
 
-        $instance = $instance ?: Instance::default_instance();
+        $instance = $instance ?: Database::instance('default');
 
         if (isset($instance::$tableCache[$name.'.'.$alias])) {
             return $instance::$tableCache[$name.'.'.$alias];
@@ -85,7 +85,7 @@ class Table
         }
         $this->alias = $alias;
 
-        $instance       = $instance ?: Instance::default_instance();
+        $instance       = $instance ?: Database::instance('default');
         $this->instance = $instance;
 
         $this->primaryKey    = $this->instance->primaryKeyForTable($this);

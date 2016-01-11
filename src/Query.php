@@ -164,7 +164,7 @@ class Query
         }
 
         $this->table        = $table;
-        $this->instance     = $instance ?: Instance::default_instance();
+        $this->instance     = $instance ?: Database::instance('default');
     }
 
     /**

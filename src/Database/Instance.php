@@ -46,24 +46,27 @@ class Instance
     private $driver = null;
 
     /**
-     * All active instances.
-     *
-     * @var Instance[]
-     */
-    private static $instances = [];
-
-    /**
      * Create a new instance of the database and driver.
      *
-     * @param string|null $name The connection name
+     * @param string|null       $name   The connection name
+     * @param Config|array|null $config The config for the instance
      */
-    public function __construct($name = null)
+    public function __construct($name = null, $config = null)
     {
         // If a name isn't provided, then we'll use the default
         $this->name = $name ?: 'default';
 
         // Get the config for this instance
-        $config = Config::get($this->name);
+        switch (true) {
+            case $config instanceof Config:
+                break;
+            case is_array($config):
+                $config = new Config($config);
+                break;
+            case $config === null:
+                $config = Config::get($this->name);
+                break;
+        }
 
         // Store the database name
         $this->databaseName = $config->database;
@@ -76,33 +79,6 @@ class Instance
         if (!($this->driver instanceof Driver)) {
             throw new InvalidDriverException($driver.' is not a valid driver.');
         }
-
-        // Cache the instance
-        static::$instances[$this->name] = $this;
-    }
-
-    /**
-     * Return the database instance.
-     *
-     * @return Instance
-     */
-    public static function instance($name)
-    {
-        if (isset(static::$instances[$name])) {
-            return static::$instances[$name];
-        }
-
-        return static::$instances[$name] = new self($name);
-    }
-
-    /**
-     * Return the default database instance.
-     *
-     * @return Instance
-     */
-    public static function default_instance()
-    {
-        return static::instance('default');
     }
 
     /**
