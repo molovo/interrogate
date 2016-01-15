@@ -122,6 +122,16 @@ class Collection implements \IteratorAggregate
     }
 
     /**
+     * Get the size of the collection.
+     *
+     * @return int
+     */
+    public function size()
+    {
+        return count($this->models);
+    }
+
+    /**
      * Create the ArrayIterator that allows us to call foreach on the model.
      *
      * @method getIterator
