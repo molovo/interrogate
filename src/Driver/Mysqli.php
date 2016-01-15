@@ -216,7 +216,7 @@ class Mysqli implements DriverInterface
         }
 
         // We only need to bind parameters if vars exist
-        if (sizeof($query->vars) > 0) {
+        if (count($query->vars) > 0) {
             $this->bindParams($stmt, $query->vars);
         }
 

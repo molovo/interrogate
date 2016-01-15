@@ -241,7 +241,7 @@ class Builder
         $fields         = $this->query->updateFields;
         $compiledFields = [];
 
-        if (sizeof($fields) > 0) {
+        if (count($fields) > 0) {
             $this->queryString .= 'SET ';
 
             foreach ($fields as $key => $value) {
@@ -264,7 +264,7 @@ class Builder
         $compiledFields = [];
         $compiledValues = [];
 
-        if (sizeof($fields) > 0) {
+        if (count($fields) > 0) {
             foreach ($fields as $key => $value) {
                 $compiledFields[] = '`'.$key.'`';
                 $compiledValues[] = '?';
@@ -429,13 +429,13 @@ class Builder
 
         if (is_string($value)) {
             $bits   = explode('.', $value);
-            $column = $bits[sizeof($bits) - 1];
+            $column = $bits[count($bits) - 1];
 
-            if (sizeof($bits) === 1 && $table->hasField($column)) {
+            if (count($bits) === 1 && $table->hasField($column)) {
                 return '`'.$table->alias.'`.`'.$column.'`';
             }
 
-            if (sizeof($bits) > 1 && isset($this->subqueries[$table->alias])) {
+            if (count($bits) > 1 && isset($this->subqueries[$table->alias])) {
                 $query = $this->subqueries[$table->alias];
 
                 if ($query !== null) {
@@ -451,7 +451,7 @@ class Builder
                 }
             }
 
-            if (sizeof($bits) === 2 && isset($this->subqueries[$bits[0]])) {
+            if (count($bits) === 2 && isset($this->subqueries[$bits[0]])) {
                 $tableAlias = $bits[0];
                 $query      = $this->subqueries[$tableAlias];
 
@@ -496,7 +496,7 @@ class Builder
             $field     = $fieldName.' '.$direction;
         }
 
-        if (sizeof($fields) !== 0) {
+        if (count($fields) !== 0) {
             $this->queryString .= ' ORDER BY '.implode(', ', $fields);
         }
     }
@@ -509,7 +509,7 @@ class Builder
             $field = $this->formatValueStrings($field);
         }
 
-        if (sizeof($fields) !== 0) {
+        if (count($fields) !== 0) {
             $this->queryString .= ' GROUP BY '.implode(', ', $fields);
         }
     }

@@ -234,12 +234,12 @@ class Query
         $args = func_get_args();
 
         // If nothing is passed, then select all
-        if (sizeof($args) === 0) {
+        if (count($args) === 0) {
             $args = ['*'];
         }
 
         // If null is passed, then do not select any fields
-        if (sizeof($args) === 1 && $args[0] === null) {
+        if (count($args) === 1 && $args[0] === null) {
             $args = [];
         }
 
@@ -283,7 +283,7 @@ class Query
         }
 
         // If this is the first where clause, force the WHERE keyword
-        if (sizeof($this->clauses) === 0) {
+        if (count($this->clauses) === 0) {
             $delimiter = 'WHERE';
         }
 
@@ -372,7 +372,7 @@ class Query
         }
 
         // If this is the first where clause, force the ON keyword
-        if (sizeof($this->onClauses) === 0) {
+        if (count($this->onClauses) === 0) {
             $delimiter = 'ON';
         }
 
@@ -427,7 +427,7 @@ class Query
         }
 
         // If this is the first where clause, force the HAVING keyword
-        if (sizeof($this->havingClauses) === 0) {
+        if (count($this->havingClauses) === 0) {
             $delimiter = 'HAVING';
         }
 

@@ -35,7 +35,7 @@ trait Driver
      * @param Collection $collection The collection to store the model in
      * @param Query      $query      The query which produced the data
      */
-    protected function packageModel(array $data = [], Collection &$collection, Query $query)
+    protected function packageModel(array $data, Collection &$collection, Query $query)
     {
         $primary = $query->table->primaryKey;
 
