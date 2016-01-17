@@ -2,7 +2,6 @@
 
 namespace Molovo\Interrogate\Traits;
 
-use Doctrine\Common\Inflector\Inflector;
 use Molovo\Interrogate\Collection;
 use Molovo\Interrogate\Config;
 use Molovo\Interrogate\Model;
@@ -24,6 +23,13 @@ trait Driver
      * @var Model[]
      */
     protected $tempModels = [];
+
+    /**
+     * A cache of table names mapped to model classnames.
+     *
+     * @var string[]
+     */
+    protected static $modelClassCache = [];
 
     /**
      * Convert an array of data into a Model object, and store it
@@ -56,34 +62,10 @@ trait Driver
                 }
             }
 
-            $namespace = null;
-            $config    = Config::get($query->table->instance->name);
-
-            if (isset($config->model_namespace)) {
-                $namespace = $config->model_namespace;
-            }
-
-            if ($namespace === null) {
-                $config = Config::get('default');
-
-                if (isset($config->model_namespace)) {
-                    $namespace = $config->model_namespace;
-                }
-
-                if ($namespace === null) {
-                    $namespace = 'Models';
-                }
-            }
-
-            $class_name = Str::singularize($query->table->name);
-            $class_name = Str::camelCaps($namespace.'\\'.$class_name);
-
-            if (!class_exists($class_name)) {
-                $class_name = Model::class;
-            }
+            $modelClass = $this->getModelClass($query->table);
 
             // Create a new model using the result data.
-            $model         = new Model($query->table, $modelData, $this->instance);
+            $model         = new $modelClass($query->table, $modelData, $this->instance);
             $model->stored = true;
 
             // Store the model for reference later
@@ -119,6 +101,54 @@ trait Driver
         }
     }
 
+    /**
+     * Work the model class based on the table name, and cache it for later.
+     *
+     * @param Table $table The table to get a model for
+     *
+     * @return string The name of a model class
+     */
+    protected function getModelClass($table)
+    {
+        if (isset(static::$modelClassCache[$table->name])) {
+            return static::$modelClassCache[$table->name];
+        }
+        $namespace = null;
+        $config    = Config::get($table->instance->name);
+
+        if (isset($config->model_namespace)) {
+            $namespace = $config->model_namespace;
+        }
+
+        if ($namespace === null) {
+            $config = Config::get('default');
+
+            if (isset($config->model_namespace)) {
+                $namespace = $config->model_namespace;
+            }
+
+            if ($namespace === null) {
+                $namespace = 'Models';
+            }
+        }
+
+        $modelClass = Str::singularize($table->name);
+        $modelClass = Str::camelCaps($namespace.'\\'.$modelClass);
+
+        if (!class_exists($modelClass)) {
+            $modelClass = Model::class;
+        }
+
+        return static::$modelClassCache[$table->name] = $modelClass;
+    }
+
+    /**
+     * Check that a dataset contains more than just null values.
+     *
+     * @param array $data The dataset to check
+     *
+     * @return bool
+     */
     protected function checkDataNotEmpty($data)
     {
         foreach ($data as $key => $value) {
