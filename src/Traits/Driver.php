@@ -151,7 +151,7 @@ trait Driver
      */
     protected function checkDataNotEmpty($data)
     {
-        foreach ($data as $key => $value) {
+        foreach ($data as $value) {
             if ($value !== null) {
                 return true;
             }

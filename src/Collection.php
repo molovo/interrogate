@@ -62,14 +62,14 @@ class Collection implements \IteratorAggregate
      *
      * @method detach
      *
-     * @param mixed $id The ID of the model to detach
+     * @param mixed $primary The primary key of the model to detach
      *
      * @return $this
      */
-    public function detach($id)
+    public function detach($primary)
     {
-        if (isset($this->models[$id])) {
-            unset($this->models[$id]);
+        if (isset($this->models[$primary])) {
+            unset($this->models[$primary]);
         }
 
         return $this;
@@ -112,10 +112,10 @@ class Collection implements \IteratorAggregate
      *
      * @return Model
      */
-    public function find($id)
+    public function find($primary)
     {
-        if (isset($this->models[$id])) {
-            return $this->models[$id];
+        if (isset($this->models[$primary])) {
+            return $this->models[$primary];
         }
 
         return;
