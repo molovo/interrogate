@@ -141,14 +141,27 @@ trait Driver
      */
     protected function prepareData(array $data = [])
     {
-        $prepared = [];
+        $prepared    = [];
+        $lastPath    = null;
+        $lastPointer = null;
         foreach ($data as $key => $value) {
-            $bits    = explode('___', $key);
-            $last    = explode('.', array_pop($bits));
-            foreach ($last as $lastItem) {
-                $bits[] = $lastItem;
+            $bits = explode('.', $key);
+
+            if (count($bits) === 1) {
+                $prepared[$key] = $value;
+                continue;
             }
-            $pointer = &$prepared;
+
+            list($path, $column) = $bits;
+
+            if ($path === $lastPath) {
+                $lastPointer[$column] = $value;
+                continue;
+            }
+
+            $lastPath = $path;
+            $bits     = explode('___', $path);
+            $pointer  = &$prepared;
             foreach ($bits as $bit) {
                 if (is_array($pointer)) {
                     if (!isset($pointer[$bit])) {
@@ -156,11 +169,12 @@ trait Driver
                         $pointer       = &$pointer[$bit];
                         continue;
                     }
-                    $pointer = &$pointer[$bit];
+                    $pointer     = &$pointer[$bit];
                 }
             }
 
-            $pointer = $value;
+            $pointer[$column] = $value;
+            $lastPointer      = &$pointer;
         }
 
         return $prepared;
