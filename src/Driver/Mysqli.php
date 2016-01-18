@@ -11,6 +11,7 @@ use Molovo\Interrogate\Model;
 use Molovo\Interrogate\Query;
 use Molovo\Interrogate\Table;
 use Molovo\Interrogate\Traits\Driver;
+use Molovo\Str\Str;
 use mysqli as Client;
 use mysqli_result as Result;
 use mysqli_stmt as Statement;
@@ -46,6 +47,8 @@ class Mysqli implements DriverInterface
             $config->port,
             $config->socket
         );
+
+        $this->instance = $instance;
     }
 
     /**
@@ -193,6 +196,50 @@ class Mysqli implements DriverInterface
         }
 
         return $fields;
+    }
+
+    /**
+     * Get the field names for a given table.
+     *
+     * @param Table $table The table
+     *
+     * @return string[] An array of field names
+     */
+    public function relationshipsForTable(Table $table)
+    {
+        $database      = $this->instance->databaseName;
+        $relationships = [];
+
+        // Fetch all the to-one relationships
+        $result = $this->client->query("SELECT `constraint_name`, `column_name`, `referenced_table_name`, `referenced_column_name` FROM `information_schema`.`key_column_usage` WHERE `referenced_table_name` IS NOT NULL AND `table_schema`='$database' AND `table_name`='$table->name'");
+
+        if ($result !== false) {
+            // Loop through the relationships, and add each one to the array
+            while ($data = $result->fetch_assoc()) {
+                $relationships[Str::singularize($data['referenced_table_name'])] = (object) [
+                    'column'     => $data['column_name'],
+                    'table'      => $data['referenced_table_name'],
+                    'references' => $data['referenced_column_name'],
+                ];
+            }
+        }
+
+        // Fetch all the to-many relationships
+        $result = $this->client->query("SELECT `constraint_name`, `column_name`, `table_name`, `referenced_column_name` FROM `information_schema`.`key_column_usage` WHERE `table_name` IS NOT NULL AND `table_schema`='$database' AND `referenced_table_name`='$table->name'");
+
+        // If no results are returned, return an empty array
+        if ($result !== false) {
+            // Loop through the relationships, and add each one to the array
+            while ($data = $result->fetch_assoc()) {
+                $relationships[Str::pluralize($data['table_name'])] = (object) [
+                    'column'        => $data['referenced_column_name'],
+                    'table'         => $data['table_name'],
+                    'references'    => $data['column_name'],
+                ];
+            }
+        }
+
+        return $relationships;
     }
 
     /**
