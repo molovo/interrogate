@@ -10,7 +10,7 @@
     "vlucas/phpdotenv": "2.1.*",
     "jdorn/sql-formatter": "1.2.*",
     "molovo/str": "^0.1",
-    "molovo/object": "^0.1"
+    "molovo/object": "^0.2"
   },
   "require-dev": {
     "filp/whoops": "1.*"
