@@ -2,13 +2,8 @@
 
 namespace Molovo\Interrogate;
 
-use Doctrine\Common\Inflector\Inflector;
-use Molovo\Interrogate\Collection;
 use Molovo\Interrogate\Database\Instance;
-use Molovo\Interrogate\Query;
-use Molovo\Interrogate\Table;
 use Molovo\Str\Str;
-use ReflectionClass;
 
 class Model
 {
@@ -46,6 +41,13 @@ class Model
      * @var string
      */
     protected static $tableName = null;
+
+    /**
+     * The id column for the model.
+     *
+     * @var string
+     */
+    protected static $primaryKeyColumn = null;
 
     /**
      * Create a new model.
@@ -123,6 +125,7 @@ class Model
             $relationship = $this->table->relationships[$methodName];
 
             return Query::table($relationship->table)
+                ->setModel(static::class)
                 ->where($relationship->references, $this->{$relationship->column});
         }
     }
@@ -167,6 +170,29 @@ class Model
     }
 
     /**
+     * Get the primary key column for the model.
+     *
+     * @return [type] [description]
+     */
+    public static function primaryKeyColumn()
+    {
+        if (static::$primaryKeyColumn !== null) {
+            return static::$primaryKeyColumn;
+        }
+
+        if (($table = new Table(static::$tableName)) && ($primary = $table->primaryKey) !== null) {
+            return $primary;
+        }
+
+        return;
+    }
+
+    public function primaryKey()
+    {
+        return $this->{static::primaryKeyColumn()};
+    }
+
+    /**
      * Get a query ref for a statically called method.
      *
      * @param string $methodName The method being called
@@ -180,6 +206,7 @@ class Model
         $table = static::getTable();
 
         $query = Query::table($table);
+        $query->setModel(static::class);
 
         // Create a reference class against Query
         $queryRef    = new \ReflectionClass(Query::class);

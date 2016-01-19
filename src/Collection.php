@@ -21,8 +21,8 @@ class Collection implements \IteratorAggregate
     public function __construct(array $models = [])
     {
         foreach ($models as $model) {
-            $key                  = $model->{$model->table->primaryKey};
-            $this->models[$key]   = $model;
+            $key                = $model->primaryKey();
+            $this->models[$key] = $model;
         }
     }
 
@@ -36,8 +36,6 @@ class Collection implements \IteratorAggregate
     public function __toString()
     {
         return implode(', ', array_keys($this->models));
-
-        return $this->{$this->table->primaryKey};
     }
 
     /**
@@ -51,8 +49,8 @@ class Collection implements \IteratorAggregate
      */
     public function attach(Model $model)
     {
-        $key                  = $model->{$model->table->primaryKey};
-        $this->models[$key]   = $model;
+        $key                = $model->primaryKey();
+        $this->models[$key] = $model;
 
         return $this;
     }
@@ -190,7 +188,7 @@ class Collection implements \IteratorAggregate
 
         foreach ($this->models as $model) {
             if ($key === null) {
-                $key = $model->table->primaryKey;
+                $key        = $model::primaryKeyColumn();
             }
             $output[$model->{$key}] = $model->{$value};
         }
