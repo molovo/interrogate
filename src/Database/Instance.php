@@ -33,9 +33,10 @@ class Instance
      * @var array
      */
     private $drivers = [
-        'mysqli'    => Mysqli::class,
-        'pdo-mysql' => Pdo\Mysql::class,
-        'pdo-pgsql' => Pdo\Pgsql::class,
+        'mysqli'     => Mysqli::class,
+        'pdo-mysql'  => Pdo\Mysql::class,
+        'pgsql'      => Pdo\Pgsql::class,
+        'sqlite'     => Pdo\Sqlite::class,
     ];
 
     /**
