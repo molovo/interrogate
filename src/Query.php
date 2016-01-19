@@ -4,11 +4,8 @@ namespace Molovo\Interrogate;
 
 use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Exceptions\QuerySyntaxError;
-use Molovo\Interrogate\Query;
 use Molovo\Interrogate\Query\Builder;
-use Molovo\Interrogate\Table;
 use Molovo\Str\Str;
-use ReflectionClass;
 
 class Query
 {
@@ -34,6 +31,13 @@ class Query
      * @var Table|null
      */
     public $table = null;
+
+    /**
+     * The model class to use for returned objects.
+     *
+     * @var string
+     */
+    public $model = null;
 
     /**
      * The fields to select.
@@ -206,6 +210,11 @@ class Query
 
         // Return the query for chaining
         return $this;
+    }
+
+    public function setModel($model)
+    {
+        $this->model = $model;
     }
 
     /**

@@ -2,9 +2,7 @@
 
 namespace Molovo\Interrogate\Query;
 
-use Molovo\Interrogate\Exceptions\QueryExecutionException;
 use Molovo\Interrogate\Query;
-use SqlFormatter;
 
 class Builder
 {
@@ -192,6 +190,10 @@ class Builder
      */
     private function compileSelectFields()
     {
+        if (empty($this->query->fields)) {
+            $this->query->fields[$this->query->table->alias] = $this->query->table->fields;
+        }
+
         $fields = $this->query->fields;
 
         $compiledFields = [];

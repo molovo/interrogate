@@ -43,7 +43,11 @@ trait Driver
      */
     protected function packageModel(array $data, Collection &$collection, Query $query)
     {
-        $primary = $query->table->primaryKey;
+        $modelClass = $this->getModelClass($query);
+
+        if (!($primary = $query->table->primaryKey)) {
+            $primary = $modelClass::primaryKeyColumn();
+        }
 
         // Get the current hash of the collection, so that we can compare
         // models within it when looping through results.
@@ -61,8 +65,6 @@ trait Driver
                     $modelData[$key] = $value;
                 }
             }
-
-            $modelClass = $this->getModelClass($query->table);
 
             // Create a new model using the result data.
             $model         = new $modelClass($query->table, $modelData, $this->instance);
@@ -104,17 +106,22 @@ trait Driver
     /**
      * Work the model class based on the table name, and cache it for later.
      *
-     * @param Table $table The table to get a model for
+     * @param Query $query The query to get a model for
      *
      * @return string The name of a model class
      */
-    protected function getModelClass($table)
+    protected function getModelClass(Query $query)
     {
-        if (isset(static::$modelClassCache[$table->name])) {
-            return static::$modelClassCache[$table->name];
+        if ($query->model !== null) {
+            return $query->model;
         }
+
+        if (isset(static::$modelClassCache[$query->table->name])) {
+            return static::$modelClassCache[$query->table->name];
+        }
+
         $namespace = null;
-        $config    = Config::get($table->instance->name);
+        $config    = Config::get($query->table->instance->name);
 
         if (isset($config->model_namespace)) {
             $namespace = $config->model_namespace;
@@ -132,14 +139,14 @@ trait Driver
             }
         }
 
-        $modelClass = Str::singularize($table->name);
+        $modelClass = Str::singularize($query->table->name);
         $modelClass = Str::camelCaps($namespace.'\\'.$modelClass);
 
         if (!class_exists($modelClass)) {
             $modelClass = Model::class;
         }
 
-        return static::$modelClassCache[$table->name] = $modelClass;
+        return static::$modelClassCache[$query->table->name] = $modelClass;
     }
 
     /**
