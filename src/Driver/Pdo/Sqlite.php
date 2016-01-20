@@ -7,6 +7,7 @@ use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Interfaces\Driver as DriverInterface;
 use Molovo\Interrogate\Table;
 use Molovo\Interrogate\Traits\PdoDriver;
+use Molovo\Str\Str;
 use PDO;
 
 class Sqlite implements DriverInterface
@@ -31,6 +32,9 @@ class Sqlite implements DriverInterface
         $dsn = 'sqlite:'.$config->database;
 
         $this->client = new PDO($dsn);
+
+        // Force foreign keys to be turned on
+        $this->client->query('PRAGMA foreign_keys = ON;');
     }
 
     /**
@@ -71,7 +75,7 @@ class Sqlite implements DriverInterface
         }
 
         // Fetch the query results
-        while ($data   = $result->fetch(PDO::FETCH_ASSOC)) {
+        while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
             if ((int) $data['pk'] === 1) {
                 // Return the field name
                 return $data['name'];
@@ -120,33 +124,57 @@ class Sqlite implements DriverInterface
         $relationships = [];
 
         // Fetch all the to-one relationships
-        $result = $this->client->query("SELECT `constraint_name`, `column_name`, `referenced_table_name`, `referenced_column_name` FROM `information_schema`.`key_column_usage` WHERE `referenced_table_name` IS NOT NULL AND `table_schema`='$database' AND `table_name`='$table->name'");
+        $result = $this->client->query("PRAGMA foreign_key_list(`$table->name`)");
 
         if ($result !== false) {
             // Loop through the relationships, and add each one to the array
             while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
-                $name                 = Str::singularize($data['constraint_name']);
+                $name                 = Str::singularize($data['table']);
                 $relationships[$name] = (object) [
-                    'column'     => $data['column_name'],
-                    'table'      => $data['referenced_table_name'],
-                    'references' => $data['referenced_column_name'],
+                    'column'     => $data['from'],
+                    'table'      => $data['table'],
+                    'references' => $data['to'],
                 ];
             }
         }
 
         // Fetch all the to-many relationships
-        $result = $this->client->query("SELECT `constraint_name`, `column_name`, `table_name`, `referenced_column_name` FROM `information_schema`.`key_column_usage` WHERE `table_name` IS NOT NULL AND `table_schema`='$database' AND `referenced_table_name`='$table->name'");
+        $result = $this->client->query("SELECT sql
+              FROM (
+                    SELECT sql sql, type type, tbl_name tbl_name, name name
+                      FROM sqlite_master
+                     UNION ALL
+                    SELECT sql, type, tbl_name, name
+                      FROM sqlite_temp_master
+                   )
+             WHERE type != 'meta'
+               AND sql NOTNULL
+               AND name NOT LIKE 'sqlite_%'
+             ORDER BY substr(type, 2, 1), name");
 
         // If no results are returned, return an empty array
         if ($result !== false) {
             // Loop through the relationships, and add each one to the array
             while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
-                $name                 = Str::pluralize($data['constraint_name']);
-                $relationships[$name] = (object) [
-                    'column'     => $data['referenced_column_name'],
-                    'table'      => $data['table_name'],
-                    'references' => $data['column_name'],
-                ];
+                preg_match_all("#((?:REFERENCES )(?P<table>$table->name)(?:\(.+\)))#", $data['sql'], $matches);
+
+                if (isset($matches['table']) && $matches['table'][0] === $table->name) {
+                    preg_match("#((?:CREATE TABLE )(?P<table>.+)(?: \())#", $data['sql'], $ref);
+                    $ref_table = $ref['table'];
+
+                    preg_match("#((?:FOREIGN KEY\()(?P<references>[\S]+)(?:\)))#", $data['sql'], $ref);
+                    $references = $ref['references'];
+
+                    preg_match("#((?:REFERENCES $table->name\()(?P<column>.+)(?:\)))#", $data['sql'], $ref);
+                    $column = $ref['column'];
+
+                    $name                 = Str::pluralize($ref_table);
+                    $relationships[$name] = (object) [
+                        'column'     => $column,
+                        'table'      => $ref_table,
+                        'references' => $references,
+                    ];
+                }
             }
         }
 
