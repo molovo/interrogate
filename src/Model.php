@@ -60,7 +60,7 @@ class Model
     public function __construct(Table $table = null, array $data = [])
     {
         if ($table === null) {
-            $table = new Table(static::$tableName);
+            $table = Table::find(static::$tableName);
         }
 
         $this->table = $table;
@@ -180,7 +180,7 @@ class Model
             return static::$primaryKeyColumn;
         }
 
-        if (($table = new Table(static::$tableName)) && ($primary = $table->primaryKey) !== null) {
+        if (($table = Table::find(static::$tableName)) && ($primary = $table->primaryKey) !== null) {
             return $primary;
         }
 
