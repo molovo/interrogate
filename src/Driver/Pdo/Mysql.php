@@ -5,7 +5,9 @@ namespace Molovo\Interrogate\Driver\Pdo;
 use Molovo\Interrogate\Config;
 use Molovo\Interrogate\Database\Instance;
 use Molovo\Interrogate\Interfaces\Driver as DriverInterface;
+use Molovo\Interrogate\Table;
 use Molovo\Interrogate\Traits\PdoDriver;
+use Molovo\Str\Str;
 use PDO;
 
 class Mysql implements DriverInterface
