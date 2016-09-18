@@ -209,7 +209,7 @@ class Model
         $query->setModel(static::class);
 
         // Create a reference class against Query
-        $queryRef    = new \ReflectionClass(Query::class);
+        $queryRef = new \ReflectionClass(Query::class);
 
         // Check if the method exists on the Query class
         if ($queryRef->hasMethod($methodName)) {
@@ -237,7 +237,7 @@ class Model
         // If we get here, the method does not exist within the Query class,
         // so we fetch the results of the query, and try the same method on the
         // collection class
-        $collection    = $query->fetch();
+        $collection = $query->fetch();
 
         // Create a reference class against Collection
         $collectionRef = new \ReflectionClass(Collection::class);

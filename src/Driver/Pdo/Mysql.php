@@ -88,7 +88,7 @@ class Mysql implements DriverInterface
         }
 
         // Fetch the query results
-        $data   = $result->fetch(PDO::FETCH_ASSOC);
+        $data = $result->fetch(PDO::FETCH_ASSOC);
 
         // Return the field name
         return $data['Column_name'];
@@ -154,9 +154,9 @@ class Mysql implements DriverInterface
             // Loop through the relationships, and add each one to the array
             while ($data = $result->fetch(PDO::FETCH_ASSOC)) {
                 $relationships[Str::pluralize($data['table_name'])] = (object) [
-                    'column'        => $data['referenced_column_name'],
-                    'table'         => $data['table_name'],
-                    'references'    => $data['column_name'],
+                    'column'     => $data['referenced_column_name'],
+                    'table'      => $data['table_name'],
+                    'references' => $data['column_name'],
                 ];
             }
         }

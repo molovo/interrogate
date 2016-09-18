@@ -99,7 +99,7 @@ class Mysqli implements DriverInterface
         $success = $stmt->execute();
 
         // Get the result object
-        $result  = $stmt->get_result();
+        $result = $stmt->get_result();
 
         if ($success && $result) {
             // Package the results into models
@@ -164,7 +164,7 @@ class Mysqli implements DriverInterface
         }
 
         // Fetch the query results
-        $data   = $result->fetch_assoc();
+        $data = $result->fetch_assoc();
 
         // Return the field name
         return $data['Column_name'];
@@ -232,9 +232,9 @@ class Mysqli implements DriverInterface
             // Loop through the relationships, and add each one to the array
             while ($data = $result->fetch_assoc()) {
                 $relationships[Str::pluralize($data['table_name'])] = (object) [
-                    'column'        => $data['referenced_column_name'],
-                    'table'         => $data['table_name'],
-                    'references'    => $data['column_name'],
+                    'column'     => $data['referenced_column_name'],
+                    'table'      => $data['table_name'],
+                    'references' => $data['column_name'],
                 ];
             }
         }
@@ -326,7 +326,7 @@ class Mysqli implements DriverInterface
     private function packageResults(Result $result, $query)
     {
         // Create an empty collection to store results in
-        $collection     = new Collection;
+        $collection = new Collection;
 
         $collection->totalRows = $this->foundRows();
 
